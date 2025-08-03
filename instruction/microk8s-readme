@@ -50,4 +50,63 @@ helm list -a
 helm uninstall test1
 
 
+upgrade app
+helm upgrade myhelloworldrelease helloworld
+
+rollback app with revision no
+helm list -a
+helm rollback myhelloworldrelease 1
+
+
+Validate helm chart before install
+helm --debug --dry-run
+
+helm install myhelloworld --debug --dry-run helloworld
+
+Helm Template
+renders the chart templates locally
+
+helm template helloworld
+
+Helm Lint - Find any misconfiguration or error
+
+helm lint helloworld
+
+helm uninstall - Remove the chart
+
+helm uninstall myhelloworldrelease
+
+
+github.com/rahulwagh/python-flask-rest-api-project
+
+docker build
+docker tag
+docker push
+
+
+create helm chart
+helm create phython-flask-rest-api-project
+
+>>>>>helmfile - https://jhooq.com/helmfile-manage-helmchart/
+
+helmfile sync
+helmfile -version
+
+add plugin - helm-git
+helm plugin install https://github.com/aslafy-z/helm-git --version 1.4.0
+
+>>> Helm repo
+
+helm search hub wordpress
+helm search hub wordpress  --max-col-width=0
+(complete url of helm chart repo)
+
+helm repo list
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm repo list
+helm show readme bitnami/wordpress --version 15.2.13
+
+
+>> helm hooks & test
 
