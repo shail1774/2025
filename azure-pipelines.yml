@@ -3,6 +3,8 @@ trigger:
 
 variables:
   imageName: 'cshailesh/test_2025/test_01'
+  dockerHubUsername: 'cshailesh'
+  dockerHubPassword: $(dockerHubPassword)  # Define this securely in pipeline variables
 
 stages:
 - stage: BuildAndPush
@@ -14,13 +16,14 @@ stages:
     steps:
     - checkout: self
 
-    - task: Docker@2
-      displayName: 'Build and Push to Docker Hub'
-      inputs:
-        containerRegistry: 'Docker_hub'  # Must match the service connection name exactly
-        repository: '$(imageName)'
-        command: 'buildAndPush'
-        Dockerfile: '**/Dockerfile'
-        tags: |
-          latest
-          $(Build.BuildId)
+    - script: |
+        echo "$(dockerHubPassword)" | docker login -u "$(dockerHubUsername)" --password-stdin
+      displayName: 'Docker Login'
+
+    - script: |
+        docker build -t $(imageName):latest .
+      displayName: 'Docker Build'
+
+    - script: |
+        docker push $(imageName):latest
+      displayName: 'Docker Push'
