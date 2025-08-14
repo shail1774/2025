@@ -16,7 +16,7 @@ steps:
   displayName: 'Login to Docker Hub'
   inputs:
     command: login
-    containerRegistry: 'dockerhub-service-connection'  # your Docker Hub service connection name
+    containerRegistry: 'Docker_hub'  # your Docker Hub service connection name
 
 - task: Docker@2
   displayName: 'Build and push Docker image'
@@ -24,7 +24,7 @@ steps:
     command: buildAndPush
     repository: $(imageName)
     dockerfile: '**/Dockerfile'
-    containerRegistry: 'dockerhub-service-connection'
+    containerRegistry: 'Docker_hub'
     tags: |
       $(tag)
       latest  # optionally push latest tag too
