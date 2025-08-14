@@ -4,7 +4,7 @@ trigger:
 variables:
   imageName: 'cshailesh/test_2025/test_01'
   dockerHubUsername: 'cshailesh'
-  dockerHubPassword: $(dockerHubPassword)  # Define this securely in pipeline variables
+  
 
 stages:
 - stage: BuildAndPush
