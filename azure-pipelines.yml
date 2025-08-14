@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: 'cshailesh/test_2025'  # Docker Hub repo name
+  imageName: 'cshailesh/test_2025/test_01'  # Docker Hub repo name
   tag: '$(Build.BuildId)'                                         # Use build ID as tag (optional)
 
 steps:
