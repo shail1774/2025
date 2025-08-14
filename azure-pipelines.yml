@@ -1,30 +1,26 @@
 trigger:
 - main
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 variables:
-  imageName: 'cshailesh/test_2025/test_01'  # Docker Hub repo name
-  tag: '$(Build.BuildId)'                                         # Use build ID as tag (optional)
+  imageName: 'cshailesh/test_2025/test_01'
 
-steps:
-- task: Checkout@1
-  displayName: 'Checkout source code'
+stages:
+- stage: BuildAndPush
+  jobs:
+  - job: DockerJob
+    pool:
+      vmImage: 'ubuntu-latest'
 
-- task: Docker@2
-  displayName: 'Login to Docker Hub'
-  inputs:
-    command: login
-    containerRegistry: 'Docker_hub'  # your Docker Hub service connection name
+    steps:
+    - checkout: self
 
-- task: Docker@2
-  displayName: 'Build and push Docker image'
-  inputs:
-    command: buildAndPush
-    repository: $(imageName)
-    dockerfile: '**/Dockerfile'
-    containerRegistry: 'Docker_hub'
-    tags: |
-      $(tag)
-      latest  # optionally push latest tag too
+    - task: Docker@2
+      displayName: 'Build and Push to Docker Hub'
+      inputs:
+        containerRegistry: 'Docker_hub'  # Must match the service connection name exactly
+        repository: '$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          latest
+          $(Build.BuildId)
