@@ -2,7 +2,7 @@ trigger:
 - main
 
 variables:
-  imageName: 'cshailesh/test_2025/test_01'
+  imageName: 'cshailesh/test_2025-test_01'
   dockerHubUsername: 'cshailesh'
   
 
