@@ -9,7 +9,7 @@ stages:
   jobs:
   - job: DockerJob
     pool:
-      vmImage: 'ubuntu-latest'
+      name: Testing_Agent
 
     steps:
     - checkout: self
