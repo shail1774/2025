@@ -1,0 +1,9 @@
+Helm is a package manager for Kubernetes that allows you to define, install, and upgrade even the most complex Kubernetes applications. Here are five important properties of Helm charts in Kubernetes:
+
+1. Reusability
+2. Versioning
+3. Templating
+4. Dependency Management
+5. Upgradation
+
+https://github.com/iam-veeramalla/helm-zero-to-hero/blob/main/01-what-is-helm.md
