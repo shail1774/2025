@@ -1,0 +1,123 @@
+Fluxcd
+export GIT_PASSWORD="9FTl1s6YVOmsC88DuFnJG0P0CiKqACLuO6FJeLZblZAmBEojyRxrJQQJ99BHACAAAAAAAAAAAAASAZDO1yh7"
+
+flux bootstrap git \
+  --token-auth=true \
+  --url=https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo \
+  --branch=main \
+  --username=git \
+  --password="$GIT_PASSWORD" \
+  --path=clusters/aks-main
+  
+  Check Flux reconciliation status 
+kubectl get pods -n  kube-system
+flux get kustomizations -n kube-system
+flux get helmreleases -n kube-system
+
+flux reconcile helmrelease ingress-nginx -n kube-system
+flux get helmreleases -n  kube-system
+
+Inspect event logs for cert-manager resources
+
+kubectl get events -n kube-system --sort-by='.metadata.creationTimestamp'
+
+
+kubectl describe helmrelease cert-manager -n kube-system
+
+ Validate CustomResourceDefinitions (CRDs)
+ kubectl get crds | grep cert-manager
+ 
+If CRDs are missing, cert-manager pods won’t start.
+
+Flux HelmRelease should be configured with install.crds: Create to install CRDs automatically.
+
+
+ Confirm Flux components are healthy
+ kubectl get pods -n flux-system
+ 
+ 
+To configure cert-manager to issue certificates for your applications running on your Kubernetes cluster, 
+you need to create an Issuer or a ClusterIssuer resource that represents the certificate authority (CA) cert-manager will use to sign certificates. Then you create Certificate resources to request certificates for your apps.
+
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm search repo ingress-nginx/ingress-nginx --versions
+ 
+ 
+ 1. Suspend and Resume the HelmRelease
+This forces the Helm controller to reset and retry reconciliation:
+
+bash
+flux suspend helmrelease ingress-nginx -n kube-system
+flux resume helmrelease ingress-nginx -n kube-system
+
+2. Annotate the HelmRelease to reset retries
+You can reset Helm controller retry counts by adding a timestamp annotation:
+
+bash
+flux annotate helmrelease ingress-nginx -n kube-system reconcile.fluxcd.io/resetAt="$(date +%s)" --overwrite
+flux reconcile helmrelease ingress-nginx -n kube-system
+This triggers Flux to retry the Helm release operations.
+
+3. Check HelmRelease status and events
+Use kubectl describe to see error details or failure reasons:
+
+bash
+kubectl describe helmrelease ingress-nginx -n kube-system
+kubectl get events -n kube-system --sort-by='.metadata.creationTimestamp'
+
+4. Check Helm release status manually
+Verify the Helm release state with Helm CLI:
+
+bash
+helm status ingress-nginx -n kube-system
+
+If it is stuck, you may need to manually intervene (e.g., rollback or uninstall via Helm).
+
+5. Delete HelmRelease Secret locks if stuck
+Sometimes a HelmRelease may stuck due to stale secret locks. List and delete Helm secrets related to the release:
+
+bash
+kubectl get secrets -n kube-system | grep ingress-nginx
+kubectl delete secret <secret-name> -n kube-system
+Be cautious as deleting Helm secrets affects release tracking.
+
+6. Check Flux and Helm controller logs
+Look at the Helm controller logs to identify detailed errors:
+
+bash
+kubectl logs -n flux-system deployment/helm-controller
+
+7. Increase HelmRelease install/upgrade timeouts
+In your HelmRelease YAML, you can set:
+
+text
+spec:
+  install:
+    timeout: 15m0s
+  upgrade:
+    timeout: 15m0s
+To allow more time for Helm operations on large charts.
+
+8. Force reconciliation again
+Finally, try a force reconcile with reset flag:
+
+bash
+flux reconcile helmrelease ingress-nginx -n kube-system --reset
+If issues persist, sharing HelmRelease YAML and controller logs would help diagnose more specifically.
+
+1. Check the status of all Flux resources in all namespaces:
+bash
+flux get all --all-namespaces
+
+echo "$(pwd)/clusters/aks-main/Ado-Agent"
+kustomize build ./clusters/aks-main/Ado-Agent
+
+kubectl scale deploy ado-agent --replicas=0 -n kube-system
+
+
+Flux Kustomization Health
+You can check the health of all Kustomizations:
+
+bash
+kubectl get kustomizations -A
