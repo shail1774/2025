@@ -1,0 +1,73 @@
+Basic Helm Commands -
+Helm is the app store for Kubernetes. It simplifies installing and managing complex applications using pre-packaged "charts" - think of it like apt-get for Kubernetes.
+1. helm help Displays help for the Helm CLI or a specific command. Example: helm help
+2. helm version Shows the Helm client and server version. Example: helm version
+3. helm repo add Adds a new chart repository. Example: helm repo add stable https://charts.helm.sh/stable
+4. helm repo update Updates all Helm chart repositories to the latest version. Example: helm repo update
+5. helm repo list Lists all the repositories added to Helm. Example: helm repo list
+6. helm search hub Searches for charts on Helm Hub. Example: helm search hub nginx
+7. helm search repo Searches for charts in the repositories. Example: helm search repo stable/nginx
+8. helm show chart Displays information about a chart, including metadata and dependencies. Example: helm show chart stable/nginx
+
+Installing and Upgrading Charts
+9. helm install Installs a chart into a Kubernetes cluster. Example: helm install my-release stable/nginx
+10. helm upgrade Upgrades an existing release with a new version of the chart. Example: helm upgrade my-release stable/nginx
+11. helm upgrade --install Installs a chart if it isn’t installed or upgrades it if it exists. Example: helm upgrade --install my-release stable/nginx
+12. helm uninstall Uninstalls a release. Example: helm uninstall my-release
+13. helm list Lists all the releases installed on the Kubernetes cluster. Example: helm list
+14. helm status Displays the status of a release. Example: helm status my-release
+
+Working with Helm Charts
+15. helm create Creates a new Helm chart in a specified directory. Example: helm create my-chart
+16. helm lint Lints a chart to check for common errors. Example: helm lint ./my-chart
+17. helm package Packages a chart into a .tgz file. Example: helm package ./my-chart
+18. helm template Renders the Kubernetes YAML files from a chart without installing it. Example: helm template my-release ./my-chart
+19. helm dependency update Updates the dependencies in the Chart.yaml file. Example: helm dependency update ./my-chart
+
+Advanced Helm Commands
+20. helm rollback Rolls back a release to a previous version. Example: helm rollback my-release 1
+21. helm history Displays the history of a release. Example: helm history my-release
+22. helm get all Gets all information (including values and templates) for a release. Example: helm get all my-release
+23. helm get values Displays the values used in a release. Example: helm get values my-release
+24. helm test Runs tests defined in a chart. Example: helm test my-release
+
+Helm Chart Repositories
+25. helm repo remove Removes a chart repository. Example: helm repo remove stable
+26. helm repo update Updates the local cache of chart repositories. Example: helm repo update
+27. helm repo index Creates or updates the index file for a chart repository. Example: helm repo index ./charts
+
+Helm Values and Customization
+28. helm install --values Installs a chart with custom values. Example: helm install my-release stable/nginx --values values.yaml
+29. helm upgrade --values Upgrades a release with custom values. Example: helm upgrade my-release stable/nginx --values values.yaml
+30. helm install --set Installs a chart with a custom value set directly in the command. Example: helm install my-release stable/nginx --set replicaCount=3
+31. helm upgrade --set Upgrades a release with a custom value set. Example: helm upgrade my-release stable/nginx --set replicaCount=5
+32. helm uninstall --purge Removes a release and deletes associated resources, including the release history. Example: helm uninstall my-release --purge
+
+Helm Template and Debugging
+33. helm template --debug Renders Kubernetes manifests and includes debug output. Example: helm template my-release ./my-chart --debug
+34. helm install --dry-run Simulates the installation process to show what will happen without actually installing. Example: helm install my-release stable/nginx --dry-run
+35. helm upgrade --dry-run Simulates an upgrade process without actually applying it. Example: helm upgrade my-release stable/nginx --dry-run
+
+Helm and Kubernetes Integration
+36. helm list --namespace Lists releases in a specific Kubernetes namespace. Example: helm list --namespace kube-system
+37. helm uninstall --namespace Uninstalls a release from a specific namespace. Example: helm uninstall my-release --namespace kube-system
+38. helm install --namespace Installs a chart into a specific namespace. Example: helm install my-release stable/nginx --namespace mynamespace
+39. helm upgrade --namespace Upgrades a release in a specific namespace. Example: helm upgrade my-release stable/nginx --namespace mynamespace
+
+Helm Chart Development
+40. helm package --sign Packages a chart and signs it using a GPG key. Example: helm package ./my-chart --sign --key my-key-id
+41. helm create --starter Creates a new Helm chart based on a starter template.
+Example: helm create --starter https://github.com/helm/charts.git
+42. helm push Pushes a chart to a Helm chart repository. Example: helm push ./my-chart my-repo
+
+Helm with Kubernetes CLI
+43. helm list -n Lists releases in a specific Kubernetes namespace. Example: helm list -n kube-system
+44. helm install --kube-context Installs a chart to a Kubernetes cluster defined in a specific kubeconfig context. Example: helm install my-release stable/nginx --kube-context my-cluster
+45. helm upgrade --kube-context Upgrades a release in a specific Kubernetes context. Example: helm upgrade my-release stable/nginx --kube-context my-cluster
+
+Helm Chart Dependencies
+46. helm dependency build Builds dependencies for a Helm chart. Example: helm dependency build ./my-chart
+47. helm dependency list Lists all dependencies for a chart. Example: helm dependency list ./my-chart
+Helm History and Rollbacks
+48. helm rollback --recreate-pods Rolls back to a previous version and recreates pods. Example: helm rollback my-release 2 --recreate-pods
+49. helm history --max Limits the number of versions shown in the release history. Example: helm history my-release --max 5
