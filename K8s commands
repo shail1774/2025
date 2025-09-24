@@ -1,0 +1,51 @@
+Basic Kubernetes Commands -
+Kubernetes is the conductor of your container orchestra. It automates deployment, scaling, and management of containerized applications across server clusters.
+1. kubectl version Displays the Kubernetes client and server version. Example: kubectl version --short
+2. kubectl cluster-info Shows information about the Kubernetes cluster. Example: kubectl cluster-info
+3. kubectl get nodes Lists all nodes in the cluster. Example: kubectl get nodes
+4. kubectl get pods Lists all pods in the default namespace. Example: kubectl get pods
+5. kubectl get services Lists all services in the default namespace. Example: kubectl get services
+6. kubectl get namespaces Lists all namespaces in the cluster. Example: kubectl get namespaces
+7. kubectl describe pod Shows detailed information about a specific pod. Example: kubectl describe pod pod-name
+8. kubectl logs Displays logs for a specific pod. Example: kubectl logs pod-name
+9. kubectl create namespace Creates a new namespace. Example: kubectl create namespace my-namespace
+10. kubectl delete pod Deletes a specific pod. Example: kubectl delete pod pod-name
+
+Intermediate Kubernetes Commands
+11. kubectl apply Applies changes defined in a YAML file. Example: kubectl apply -f deployment.yaml
+12. kubectl delete Deletes resources defined in a YAML file. Example: kubectl delete -f deployment.yaml
+13. kubectl scale Scales a deployment to the desired number of replicas. Example: kubectl scale deployment my-deployment --replicas=3
+14. kubectl expose Exposes a pod or deployment as a service. Example: kubectl expose deployment my-deployment --type=LoadBalancer --port=80
+15. kubectl exec Executes a command in a running pod. Example: kubectl exec -it pod-name -- /bin/bash
+16. kubectl port-forward Forwards a local port to a port in a pod. Example: kubectl port-forward pod-name 8080:80
+17. kubectl get configmaps Lists all ConfigMaps in the namespace. Example: kubectl get configmaps
+18. kubectl get secrets Lists all Secrets in the namespace. Example: kubectl get secrets
+19. kubectl edit Edits a resource definition directly in the editor. Example: kubectl edit deployment my-deployment
+20. kubectl rollout status Displays the status of a deployment rollout. Example: kubectl rollout status deployment/my-deployment
+
+Advanced Kubernetes Commands
+21. kubectl rollout undo Rolls back a deployment to a previous revision. Example: kubectl rollout undo deployment/my-deployment
+22. kubectl top nodes Shows resource usage for nodes. Example: kubectl top nodes
+23. kubectl top pods Displays resource usage for pods. Example: kubectl top pods
+24. kubectl cordon Marks a node as unschedulable. Example: kubectl cordon node-name
+25. kubectl uncordon Marks a node as schedulable. Example: kubectl uncordon node-name
+26. kubectl drain Safely evicts all pods from a node. Example: kubectl drain node-name --ignore-daemonsets
+27. kubectl taint Adds a taint to a node to control pod placement. Example: kubectl taint nodes node-name key=value:NoSchedule
+28. kubectl get events Lists all events in the cluster. Example: kubectl get events
+29. kubectl apply -k Applies resources from a kustomization directory. Example: kubectl apply -k ./kustomization-dir/
+30. kubectl config view Displays the kubeconfig file. Example: kubectl config view
+31. kubectl config use-context Switches the active context in kubeconfig. Example: kubectl config use-context my-cluster
+32. kubectl debug Creates a debugging session for a pod. Example: kubectl debug pod-name
+33. kubectl delete namespace Deletes a namespace and its resources. Example: kubectl delete namespace my-namespace
+34. kubectl patch Updates a resource using a patch. Example: kubectl patch deployment my-deployment -p '{"spec": {"replicas": 2}}'
+35. kubectl rollout history Shows the rollout history of a deployment. Example: kubectl rollout history deployment my-deployment
+36. kubectl autoscale Automatically scales a deployment based on resource usage. Example: kubectl autoscale deployment my-deployment --cpu-percent=50 --min=1 --max=10
+37. kubectl label Adds or modifies a label on a resource. Example: kubectl label pod pod-name environment=production
+38. kubectl annotate Adds or modifies an annotation on a resource. Example: kubectl annotate pod pod-name description="My app pod"
+39. kubectl delete pv Deletes a PersistentVolume (PV). Example: kubectl delete pv my-pv
+40. kubectl get ingress Lists all Ingress resources in the namespace. Example: kubectl get ingress
+41. kubectl create configmap Creates a ConfigMap from a file or literal values. Example: kubectl create configmap my-config --from-literal=key1=value1
+42. kubectl create secret Creates a Secret from a file or literal values. Example: kubectl create secret generic my-secret --from-literal=password=myPassword
+43. kubectl api-resources Lists all available API resources in the cluster. Example: kubectl api-resources
+44. kubectl api-versions Lists all API versions supported by the cluster. Example: kubectl api-versions
+45. kubectl get crds Lists all CustomResourceDefinitions (CRDs). Example: kubectl get crds
