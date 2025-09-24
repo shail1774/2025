@@ -1,0 +1,30 @@
+Basic Terraform Commands -
+Terraform lets you build cloud infrastructure with code. Instead of clicking buttons in AWS/GCP/Azure consoles, you define servers and services in configuration files.
+50. terraform --help = Displays general help for Terraform CLI commands.
+51. terraform init = Initializes the working directory containing Terraform configuration files. It downloads the necessary provider plugins.
+52. terraform validate = Validates the Terraform configuration files for syntax errors or issues.
+53. terraform plan - Creates an execution plan, showing what actions Terraform will perform to make the infrastructure match the desired configuration.
+54. terraform apply = Applies the changes required to reach the desired state of the configuration. It will prompt for approval before making changes.
+55. terraform show = Displays the Terraform state or a plan in a human-readable format.
+56. terraform output = Displays the output values defined in the Terraform configuration after an apply.
+57. terraform destroy = Destroys the infrastructure defined in the Terraform configuration. It prompts for confirmation before destroying resources.
+58. terraform refresh = Updates the state file with the real infrastructure's current state without applying changes.
+59. terraform taint = Marks a resource for recreation on the next apply. Useful for forcing a resource to be recreated even if it hasn't been changed.
+60. terraform untaint = Removes the "tainted" status from a resource.
+61. terraform state = Manages Terraform state files, such as moving resources between modules or manually
+62. terraform import = Imports existing infrastructure into Terraform management.
+63. terraform graph = Generates a graphical representation of Terraform's resources and their relationships.
+64. terraform providers = Lists the providers available for the current Terraform configuration.
+65. terraform state list = Lists all resources tracked in the Terraform state file.
+66. terraform backend = Configures the backend for storing Terraform state remotely (e.g., in S3, Azure Blob Storage, etc.).
+67. terraform state mv = Moves an item in the state from one location to another.
+68. terraform state rm = Removes an item from the Terraform state file.
+69. terraform workspace = Manages Terraform workspaces, which allow for creating separate environments within a single configuration.
+70. terraform workspace new = Creates a new workspace.
+71. terraform module = Manages and updates Terraform modules, which are reusable configurations.
+72. terraform init -get-plugins=true = Ensures that required plugins are fetched and available for modules.
+73. TF_LOG = Sets the logging level for Terraform debug output (e.g., TRACE, DEBUG, INFO, WARN, ERROR).
+74. TF_LOG_PATH = Directs Terraform logs to a specified file.
+75. terraform login = Logs into Terraform Cloud or Terraform Enterprise for managing remote backends and workspaces.
+76. terraform remote = Manages remote backends and remote state storage for Terraform configurations.
+77. terraform push = Pushes Terraform modules to a remote module registry.
