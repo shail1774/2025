@@ -1,0 +1,54 @@
+Basic Docker Commands -
+Docker packages applications into portable containers - like shipping containers for software. These commands help build, ship, and run applications consistently across any environment.
+1. docker --version Displays the installed Docker version. Example: docker --version
+2. docker info Shows system-wide information about Docker, such as the number of containers and images. Example: docker info
+3. docker pull Downloads an image from a Docker registry (default: Docker Hub). Example: docker pull ubuntu:latest
+4. docker images Lists all downloaded images. Example: docker images
+5. docker run Creates and starts a new container from an image. Example: docker run -it ubuntu bash
+6. docker ps Lists running containers. Example: docker ps
+7. docker ps -a Lists all containers, including stopped ones. Example: docker ps -a
+8. docker stop Stops a running container. Example: docker stop container_name
+9. docker start Starts a stopped container. Example: docker start container_name
+10. docker rm Removes a container. Example: docker rm container_name
+11. docker rmi Removes an image. Example: docker rmi image_name
+12. docker exec Runs a command inside a running container. Example: docker exec -it container_name bash
+
+Intermediate Docker Commands
+13. docker build Builds an image from a Dockerfile. Example: docker build -t my_image .
+14. docker commit Creates a new image from a container’s changes. Example: docker commit container_name my_image:tag
+15. docker logs Fetches logs from a container. Example: docker logs container_name
+16. docker inspect Returns detailed information about an object (container or image). Example: docker inspect container_name
+17. docker stats Displays live resource usage statistics of running containers. Example: docker stats
+18. docker cp Copies files between a container and the host. Example: docker cp container_name:/path/in/container /path/on/host
+19. docker rename Renames a container. Example: docker rename old_name new_name
+20. docker network ls Lists all Docker networks. Example: docker network ls
+21. docker network create Creates a new Docker network. Example: docker network create my_network
+22. docker network inspect Shows details about a Docker network. Example: docker network inspect my_network
+23. docker network connect Connects a container to a network. Example: docker network connect my_network container_name
+24. docker volume ls Lists all Docker volumes. Example: docker volume ls
+25. docker volume create Creates a new Docker volume. Example: docker volume create my_volume
+26. docker volume inspect Provides details about a volume. Example: docker volume inspect my_volume
+27. docker volume rm Removes a Docker volume. Example: docker volume rm my_volume
+
+Advanced Docker Commands
+28. docker-compose up Starts services defined in a docker-compose.yml file. Example: docker-compose up
+29. docker-compose down Stops and removes services defined in a docker-compose.yml file. Example: docker-compose down
+30. docker-compose logs Displays logs for services managed by Docker Compose. Example: docker-compose logs
+31. docker-compose exec Runs a command in a service’s container. Example: docker-compose exec service_name bash
+32. docker save Exports an image to a tar file. Example: docker save -o my_image.tar my_image:tag
+33. docker load Imports an image from a tar file. Example: docker load < my_image.tar
+34. docker export Exports a container’s filesystem as a tar file. Example: docker export container_name > container.tar
+35. docker import Creates an image from an exported container. Example: docker import container.tar my_new_image
+36. docker system df Displays disk usage by Docker objects. Example: docker system df
+37. docker system prune Cleans up unused Docker resources (images, containers, volumes, networks). Example: docker system prune
+38. docker tag Assigns a new tag to an image. Example: docker tag old_image_name new_image_name
+39. docker push Uploads an image to a Docker registry. Example: docker push my_image:tag
+40. docker login Logs into a Docker registry. Example: docker login
+41. docker logout Logs out of a Docker registry. Example: docker logout
+42. docker swarm init Initializes a Docker Swarm mode cluster. Example: docker swarm init
+43. docker service create Creates a new service in Swarm mode. Example: docker service create --name my_service nginx
+44. docker stack deploy Deploys a stack using a Compose file in Swarm mode. Example: docker stack deploy -c docker-compose.yml my_stack
+45. docker stack rm Removes a stack in Swarm mode. Example: docker stack rm my_stack
+46. docker checkpoint create Creates a checkpoint for a container. Example: docker checkpoint create container_name checkpoint_name
+47. docker checkpoint ls Lists checkpoints for a container. Example: docker checkpoint ls container_name
+48. docker checkpoint rm Removes a checkpoint. Example: docker checkpoint rm container_name checkpoint_name
