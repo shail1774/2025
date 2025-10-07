@@ -1,0 +1,169 @@
+To bootstrap FluxCD on a Kubernetes cluster using images hosted in a private Azure Container Registry (ACR) repository
+
+Prerequisites
+You have a private ACR with Flux controller images pushed.
+
+Your AKS or cluster nodes have permissions to pull from the ACR (via managed identity, service principal, or image pull secret).
+
+Azure CLI and Flux CLI installed and configured.
+
+Example Flux Bootstrap Command Using Private ACR Images
+bash
+flux bootstrap azurerm \
+  --owner=<github-org-or-user> \
+  --repository=<repo-name> \
+  --branch=main \
+  --path=clusters/my-cluster \
+  --registry-auth=true \
+  --private-registry=<acr-login-server> \
+  --image-repository=<acr-login-server>/fluxcd \
+  --image-tag=<flux-image-tag> \
+  --interval=1m
+
+Explanation of key flags:
+--registry-auth=true: Enables using imagePullSecrets or managed identity to authenticate to private registries.
+
+--private-registry: The login server of your private ACR (e.g., myacr.azurecr.io).
+
+--image-repository: The repo path inside ACR that contains Flux images (e.g., myacr.azurecr.io/fluxcd).
+
+--image-tag: Specify the controller image tag to use, e.g., v0.70.0 or any version you pushed.
+
+Other standard flags set up the Git repository and cluster path as usual.
+
+Push Flux images to your private ACR
+
+Pull official Flux images.
+Tag and push images to your ACR repo.
+Use these tags in the --image-repository and --image-tag flags during bootstrap.
+
+Example: Push Flux images to ACR (sample commands)
+bash
+docker pull docker.io/fluxcd/flux:v0.70.0
+docker tag flux:v0.70.0 myacr.azurecr.io/fluxcd/flux:v0.70.0
+docker push myacr.azurecr.io/fluxcd/flux:v0.70.0
+
+Then bootstrap with that private image:
+
+bash
+flux bootstrap azurerm \
+  --owner=myorg \
+  --repository=myrepo \
+  --branch=main \
+  --path=clusters/mycluster \
+  --private-registry=myacr.azurecr.io \
+  --image-repository=myacr.azurecr.io/fluxcd \
+  --image-tag=v0.70.0 \
+  --registry-auth=true
+
+#################################################
+To allow Kubernetes (and Flux) to pull container images from a private Azure Container Registry (ACR), 
+you create a Kubernetes secret containing ACR credentials and reference it in your Flux manifests. Here’s how to do this step-by-step:
+
+1. Get ACR Credentials
+You can either use a Service Principal or an ACR admin user for the credentials.
+
+To enable the ACR admin user and get credentials:
+
+bash
+az acr update -n <acr-name> --admin-enabled true
+
+az acr credential show -n <acr-name>
+This gives you the username and password for ACR login.
+
+2. Create Docker Registry Secret in Kubernetes
+Create a Docker registry secret with the ACR credentials:
+
+bash
+kubectl create secret docker-registry acr-secret \
+  --docker-server=<acr-login-server> \
+  --docker-username=<acr-username> \
+  --docker-password=<acr-password> \
+  --docker-email=<your-email> \
+  -n flux-system
+Replace <acr-login-server> with your ACR login server (e.g., myacr.azurecr.io).
+
+Use the namespace where Flux is installed (usually flux-system).
+
+3. Reference This Secret in Flux Manifests
+In your Flux Kustomization or HelmRelease manifests where pulling from the private ACR is needed, reference this image pull secret.
+
+For example, in your deployment manifest:
+
+text
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  template:
+    spec:
+      containers:
+      - name: my-app
+        image: myacr.azurecr.io/myapp:latest
+      imagePullSecrets:
+      - name: acr-secret
+In Flux HelmRelease, add imagePullSecrets similarly in the pod template spec or use Helm chart values to specify that.
+
+#########################################################
+To bootstrap FluxCD on a Kubernetes cluster using Flux images stored in a private Azure Container Registry (ACR) and authenticating with ACR secrets,
+
+Prerequisites
+Flux images are pushed to your private ACR.
+
+Kubernetes cluster has a Docker registry secret with ACR credentials in the flux-system namespace, e.g., acr-secret.
+
+Cluster nodes can pull images from ACR (via secret or managed identity).
+
+Step 1: Create Kubernetes Secret for ACR Credentials
+If not done yet, create the Docker registry secret in the flux-system namespace:
+
+bash
+kubectl create secret docker-registry acr-secret \
+  --docker-server=<acr-login-server> \
+  --docker-username=<acr-username> \
+  --docker-password=<acr-password> \
+  --docker-email=<your-email> \
+  -n flux-system
+Step 2: Use flux bootstrap Command with Private Image Settings
+Use the flux bootstrap command with flags to specify your private ACR registry and to use the created image pull secret.
+
+bash
+flux bootstrap azurerm \
+  --owner=<git-owner> \
+  --repository=<git-repo> \
+  --branch=main \
+  --path=clusters/my-cluster \
+  --private-registry=<acr-login-server> \
+  --image-repository=<acr-login-server>/fluxcd \
+  --image-tag=<flux-image-tag> \
+  --registry-auth=true \
+  --image-pull-secret=acr-secret
+Explanation:
+--private-registry: Your ACR login server (e.g., myacr.azurecr.io).
+
+--image-repository: Location of Flux images inside the private registry.
+
+--image-tag: Tag/version of the Flux images.
+
+--registry-auth=true: Enables image pull secret usage.
+
+--image-pull-secret=acr-secret: Specifies the Kubernetes secret name that holds ACR credentials.
+
+
+Notes:
+--image-pull-secret flag configures Flux controllers to use the specified secret for pulling images.
+
+Make sure the secret exists in the flux-system namespace before bootstrapping Flux.
+
+Alternatively, you can patch Flux controller deployments after bootstrap to add the image pull secret if needed.
+
+This method allows Flux to deploy using private images stored in Azure Container Registry with proper authentication using Kubernetes secrets.
+
+If the --image-pull-secret flag is not directly supported by your Flux CLI version, you might need to bootstrap and then patch the image pull secrets on the Flux controller pods and deployments manually.
+
+
+
+
+
+
