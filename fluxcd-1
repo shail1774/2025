@@ -1,0 +1,312 @@
+FluxCD is a GitOps tool that automates the deployment of Kubernetes resources. When used with Azure Repos, you can manage your Kubernetes clusters by storing your desired state (YAML manifests, Helm charts, Kustomize overlays, etc.) in a Git repository hosted on Azure DevOps.
+
+Here’s a step-by-step breakdown with a diagram description:
+
+✅ Basic Components
+Component	Description
+Azure Repos	Stores your GitOps configuration (YAML, Helm, Kustomize).
+FluxCD	Installed in your Kubernetes cluster. Continuously syncs with your Azure Repo.
+Source Controller	Watches the Git repo for changes.
+Kustomize / Helm Controller	Applies the manifests or Helm releases from the repo.
+Kubernetes Cluster	Target where your workloads are deployed.
+
+Workflow Steps
+
+Push Configuration to Azure Repos
+You write Kubernetes manifests or Helm charts and push them to your Azure Git repository.
+
+Flux Watches Azure Repo
+FluxCD (running in your cluster) is configured to watch the Azure repo using GitRepository custom resources.
+
+Reconciliation
+
+Flux pulls the latest commit from the Azure repo.
+
+It applies the changes to your Kubernetes cluster using the KustomizeController, HelmController, or plain manifests.
+
+Continuous Sync
+Flux continuously monitors the repo (polling or webhooks) and automatically updates the cluster when changes are detected.
+
+Drift Detection
+If someone changes the cluster manually (kubectl), Flux will detect the drift and reconcile it back to match the repo.
+
+┌────────────┐         ┌──────────────────┐         ┌────────────────┐
+│ Azure Repo │ <─────> │ FluxCD: Source   │ ──────> │ FluxCD: Kustom │
+│ (Git Repo) │         │ Controller       │         │ or Helm Ctrl   │
+└────┬───────┘         └──────────────────┘         └──────┬─────────┘
+     │                                                    │
+     ▼                                                    ▼
+     ┌─────────────────────────────────────────────────────────────┐
+     │             Kubernetes Cluster (Deployment Target)          │
+     │  (Apps, Services, CRDs, ConfigMaps, etc. get updated here)  │
+     └─────────────────────────────────────────────────────────────┘
+
+
+
+Here is a concise explanation of how FluxCD works to manage Kubernetes clusters using an Azure Git repository in a GitOps workflow:
+
+Kubernetes manifests (Deployments, Services, ConfigMaps, etc.) are stored in an Azure Git repository.
+
+Developers or Azure Pipelines update the manifests in the Azure repo when application code builds or configuration changes.
+
+FluxCD components deployed in the Kubernetes cluster continuously watch the Azure Git repo for changes.
+
+The source-controller monitors the Git repo for commits.
+
+The kustomize-controller or helm-controller applies changed manifests to the cluster.
+
+When FluxCD detects new commits, it applies the updated desired state to the cluster, ensuring the cluster matches the Git state.
+
+FluxCD continuously monitors the cluster for drift and reconciles changes automatically.
+
+This GitOps pattern provides automated, declarative, version-controlled continuous deployment.
+
+FluxCD Setup with Azure Repos via HTTP (PAT Auth)
+🧾 Prerequisites
+
+Azure Repo URL: https://dev.azure.com/{org}/{project}/_git/{repo}
+
+Branch: main
+
+PAT (Personal Access Token): with Code (Read) permissions
+
+Kubernetes cluster: already connected and flux installed
+
+🔐 1. Create a Personal Access Token (PAT)
+
+Go to Azure DevOps → Click your profile icon → Personal Access Tokens
+
+Click "New Token"
+
+Set:
+
+Scope: Code (Read)
+
+Expiration: Recommended ≤ 90 days (for security)
+
+Copy the PAT — you won't be able to see it again!
+
+🔐 2. Create Kubernetes Secret with HTTP Auth
+
+You’ll store your Azure DevOps username and PAT as a Kubernetes secret.
+
+kubectl create secret generic azure-repo-auth \
+  --namespace=flux-system \
+  --from-literal=username=<azure-username> \
+  --from-literal=password=<your-pat>
+
+
+Replace <azure-username> and <your-pat> with your actual Azure DevOps username and PAT.
+
+🌐 3. Define GitRepository with HTTPS URL
+
+You’ll now tell FluxCD where your Git repo is and how to access it.
+
+flux create source git azure-repo \
+  --url=https://dev.azure.com/<org>/<project>/_git/<repo> \
+  --branch=main \
+  --interval=1m \
+  --secret-ref=azure-repo-auth \
+  --export > azure-repo-source.yaml
+
+
+Then apply:
+
+kubectl apply -f azure-repo-source.yaml
+
+
+✅ Example:
+
+flux create source git azure-repo \
+  --url=https://dev.azure.com/myorg/myproject/_git/myrepo \
+  --branch=main \
+  --interval=1m \
+  --secret-ref=azure-repo-auth \
+  --export > azure-repo-source.yaml
+
+📦 4. Create Kustomization Resource
+
+This tells Flux where in the repo your manifests are:
+
+flux create kustomization dev-kustomization \
+  --target-namespace=default \
+  --source=azure-repo \
+  --path="./clusters/dev" \
+  --prune=true \
+  --interval=2m \
+  --export > dev-kustomization.yaml
+
+
+Apply:
+
+kubectl apply -f dev-kustomization.yaml
+
+###########################################
+Assumptions
+
+Azure DevOps Org: myorg
+
+Project: myproject
+
+Repo: myrepo
+
+Branch: main
+
+Path in repo: clusters/dev
+
+Namespace: flux-system
+
+K8s Namespace for app deployment: default
+
+You’ve already created the Kubernetes secret:
+
+kubectl create secret generic azure-repo-auth \
+  --namespace=flux-system \
+  --from-literal=username=<your-azure-username> \
+  --from-literal=password=<your-personal-access-token>
+
+📄 1. GitRepository Resource
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: azure-repo
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  url: https://dev.azure.com/myorg/myproject/_git/myrepo
+  secretRef:
+    name: azure-repo-auth
+  ref:
+    branch: main
+
+📄 2. Kustomization Resource
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: dev-kustomization
+  namespace: flux-system
+spec:
+  interval: 2m0s
+  path: ./clusters/dev
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: azure-repo
+  targetNamespace: default
+  validation: client
+
+📦 Apply the Resources
+
+Save the files as:
+
+azure-repo-source.yaml
+
+dev-kustomization.yaml
+
+Then apply them:
+
+kubectl apply -f azure-repo-source.yaml
+kubectl apply -f dev-kustomization.yaml
+
+✅ Result
+
+FluxCD will pull from your Azure Repo every minute using your PAT
+
+It will apply manifests under /clusters/dev to your cluster
+
+Any changes pushed to the repo will auto-deploy
+
+#############################################
+here’s a complete example of what you should place inside your Azure DevOps Git repository (e.g., myrepo) under the folder path clusters/dev.
+
+This will include:
+
+kustomization.yaml — FluxCD entry point
+
+deployment.yaml — sample app (nginx)
+
+service.yaml — exposes the app
+
+📁 Git Repo Structure (in myrepo)
+myrepo/
+└── clusters/
+    └── dev/
+        ├── deployment.yaml
+        ├── service.yaml
+        └── kustomization.yaml
+
+📄 1. kustomization.yaml (in repo)
+
+This file tells Flux how to apply the resources in the folder:
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+
+📄 2. deployment.yaml
+
+A simple NGINX deployment:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25
+          ports:
+            - containerPort: 80
+
+📄 3. service.yaml
+
+A ClusterIP service to expose the NGINX deployment:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+✅ Final Steps
+
+Add the above 3 files to your Azure DevOps Git repo at:
+
+clusters/dev/
+
+
+Commit and push:
+
+git add clusters/dev
+git commit -m "Add FluxCD manifests"
+git push origin main
+
+
+FluxCD (already watching the repo) will detect the changes and apply the workload to your cluster.
+
+Verify with:
+
+kubectl get deployments
+kubectl get svc
+
+  
