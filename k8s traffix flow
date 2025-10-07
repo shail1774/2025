@@ -1,0 +1,199 @@
+Here is the updated network ingress and egress flow diagram with the addition of the Transport Server in the path:
+
+Traffic enters through the F5 load balancer.
+
+It passes to the Transport Server, which manages advanced traffic routing and optimization.
+
+Traffic then flows to the Kubernetes Ingress, optionally managed by CIS.
+
+Ingress routes requests to the Kubernetes Service.
+
+The Service directs traffic to the Endpoint(s).
+
+Endpoints forward traffic to the Pod.
+
+The response flows back through the same components to the client.
+
+This enhanced diagram illustrates how the Transport Server fits between the F5 load balancer and the Kubernetes Ingress, handling transport layer operations to optimize and control traffic flow.
+
+what is use of transport server in k8s
+
+The Transport Server in Kubernetes, particularly in conjunction with F5 and Container Ingress Services (CIS), is used to manage and optimize the transport layer traffic (Layer 4) between external clients and the Kubernetes cluster.
+
+Use and Purpose of Transport Server in Kubernetes
+Traffic Management: Acts as an advanced traffic management layer to handle incoming network traffic before it reaches the Kubernetes Ingress. It enables granular control over TCP/UDP traffic, SSL termination, and connection multiplexing.
+
+Load Balancing: Provides flexible load balancing strategies for both Layer 4 (transport) and Layer 7 (application) traffic, improving performance and reliability.
+
+Security and Optimization: Supports SSL offloading, TLS encryption/decryption, and can apply security policies before forwarding traffic to the Ingress controller.
+
+Custom Routing: Allows defining custom routing rules at transport level, which is useful for applications requiring special network handling or performance optimizations.
+
+Separation of Concerns: By separating transport concerns from application layer processing in the Ingress controller, it improves scalability and modularity.
+
+Why Use Transport Server?
+Offers enhanced transport-layer functionality beyond what Ingress natively supports.
+
+Enables integration of enterprise-grade network features provided by F5.
+
+Improves end-to-end traffic control, security, and monitoring within Kubernetes environments.
+
+Allows smoother handling of complex protocols and persistent connections.
+
+In Kubernetes networking architectures involving F5 BIG-IP and CIS, the Transport Server serves as the intermediary that processes and optimizes raw transport traffic before handing it off for application-level routing by Ingress.
+
+Here is a sample configuration and explanation on how to set up an F5 BIG-IP Transport Server in Kubernetes with Container Ingress Services (CIS):
+
+What is TransportServer in F5 CIS?
+The TransportServer custom resource defines non-HTTP (Layer 4) traffic configuration for a virtual server in F5 BIG-IP.
+
+It handles TCP/UDP traffic, SSL/TLS passthrough, connection multiplexing, and advanced load balancing.
+
+It routes traffic to Kubernetes services based on ports and protocols defined.
+
+Sample TransportServer YAML
+text
+apiVersion: cis.f5.com/v1
+kind: TransportServer
+metadata:
+  name: transport-server-example
+  labels:
+    f5cr: "true"
+spec:
+  virtualServerAddress: "10.8.3.11"         # IP of the virtual server on BIG-IP
+  virtualServerPort: 1344                   # Port to listen on BIG-IP
+  mode: standard                            # Transport mode (standard/passthrough)
+  snat: auto                               # Source NAT setting
+  pool:
+    service: example-service                # Kubernetes service name
+    servicePort: 8080                       # Port on service
+    monitor:
+      type: tcp                            # Health monitor type
+      interval: 10
+      timeout: 10
+  profiles:
+    tcp:
+      client: /Common/f5-tcp-lan           # TCP profiles for client/server
+      server: /Common/f5-tcp-wan
+How It Works
+BIG-IP allocates a virtual server with the given IP and port.
+
+Listens for TCP or UDP traffic on the virtual server.
+
+Applies SNAT as configured.
+
+Forwards traffic to configured Kubernetes service backend.
+
+Monitors backend health using specified health checks.
+
+Supports client and server TCP profiles for connection optimization.
+
+Typical Use Cases:
+Handling non-HTTP protocols like database traffic, MQTT, or legacy TCP apps.
+
+When TLS passthrough is required (end-to-end encryption).
+
+Advanced Layer 4 traffic management before HTTP Ingress layering.
+
+Enabling performance and security features at Transport layer (e.g., SYN flood protection).
+
+Deployment Steps:
+Install F5 CIS controller into your Kubernetes cluster.
+
+Create TransportServer CRD with virtual server IP, port, and service details.
+
+CIS controller watches TransportServer resources and configures BIG-IP accordingly.
+
+BIG-IP handles the traffic per the TransportServer spec.
+
+This separation of TransportServer and HTTP Ingress resources allows granular multi-protocol traffic management integrated with Kubernetes and F5 BIG-IP.
+
+#############################################
+
+The value f5cr: "true" in the TransportServer YAML metadata is a label used by the F5 Container Ingress Services (CIS) controller.
+
+Purpose of f5cr: "true" Label:
+It marks the resource (TransportServer) as an F5 Custom Resource (F5CR) that should be monitored and managed by the F5 CIS controller.
+
+This label helps the CIS controller identify which Kubernetes Custom Resources (CRDs) are relevant for configuring the F5 BIG-IP.
+
+When a resource is labeled with f5cr: "true", the CIS controller watches it for creation, updates, and deletions to dynamically apply or update BIG-IP configurations accordingly.
+
+Why Use This Label:
+Enables selective processing of CRDs by the CIS controller.
+
+Helps organize and filter resources associated specifically with F5 BIG-IP integration.
+
+Supports multi-tenant or complex environments where not all CRs should be managed by CIS.
+
+In short, f5cr: "true" acts as a flag to tell the F5 CIS controller “this resource is relevant for F5 BIG-IP configuration management”
+
+The value f5cr: "true" in the TransportServer YAML metadata is a label used by the F5 Container Ingress Services (CIS) controller.
+
+Purpose of f5cr: "true" Label:
+It marks the resource (TransportServer) as an F5 Custom Resource (F5CR) that should be monitored and managed by the F5 CIS controller.
+
+This label helps the CIS controller identify which Kubernetes Custom Resources (CRDs) are relevant for configuring the F5 BIG-IP.
+
+When a resource is labeled with f5cr: "true", the CIS controller watches it for creation, updates, and deletions to dynamically apply or update BIG-IP configurations accordingly.
+
+Why Use This Label:
+Enables selective processing of CRDs by the CIS controller.
+
+Helps organize and filter resources associated specifically with F5 BIG-IP integration.
+
+Supports multi-tenant or complex environments where not all CRs should be managed by CIS.
+
+In short, f5cr: "true" acts as a flag to tell the F5 CIS controller “this resource is relevant for F5 BIG-IP configuration management”
+
+######################################
+
+In a Rancher-managed Kubernetes cluster, the VIP (Virtual IP) is typically used for high availability and load balancing of control plane or service endpoints.
+
+How to get VIP details in Rancher cluster:
+Check LoadBalancer Service VIP:
+
+If a Kubernetes service of type LoadBalancer is used, get the VIP by running:
+
+bash
+kubectl get svc <service-name> -n <namespace>
+The EXTERNAL-IP field usually shows the VIP assigned by the cloud provider or MetalLB.
+
+Check kube-vip (if used for control plane HA):
+
+Rancher clusters often use kube-vip for static VIP assignment for control plane.
+
+Check the kube-vip service details in the kube-system namespace:
+
+bash
+kubectl get svc -n kube-system kube-vip
+Or get VIP annotation:
+
+bash
+kubectl get svc -n kube-system ingress-expose -ojsonpath='{.metadata.annotations.kube-vip\.io/requestedIP}'
+Rancher UI:
+
+Within the Rancher web console, navigate to the cluster details.
+
+Check the cluster’s network or node IP sections.
+
+The control plane VIP or service VIP might be displayed depending on cluster type and provider.
+
+MetalLB VIP (if used):
+
+If MetalLB is deployed for LoadBalancer support on bare metal or on-prem clusters, check its assigned IP addresses.
+
+Run:
+
+bash
+kubectl get configmap -n metallb-system config -o yaml
+The VIP range and allocation details are configured here.
+
+Summary
+VIPs are often found in LoadBalancer service external IPs, kube-vip annotations, or MetalLB configurations.
+
+Use kubectl get svc to retrieve service VIPs.
+
+Rancher UI may also expose VIP info depending on cluster setup.
+
+If Rancher is managing an RKE2 or RKE cluster, kube-vip or keepalived might be providing the control plane VIP.
