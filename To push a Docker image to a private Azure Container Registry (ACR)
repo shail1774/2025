@@ -1,0 +1,35 @@
+To push a Docker image to a private Azure Container Registry (ACR), follow these steps:
+1. Log in to Azure
+
+az login
+
+2. Log in to Your ACR
+
+az acr login --name <acr-name>
+Replace <acr-name> with your Azure Container Registry name (without the .azurecr.io suffix).
+
+3. Tag Your Local Docker Image
+Tag your local image to match your ACR login server format:
+
+docker tag <local-image>:<tag> <acr-login-server>/<repository>:<tag>
+Example:
+
+docker tag myapp:v1 myacr.azurecr.io/myapp:v1
+
+4. Push the Image to ACR
+bash
+docker push <acr-login-server>/<repository>:<tag>
+Example:
+
+bash
+docker push myacr.azurecr.io/myapp:v1
+
+5. Verify the Image in ACR
+List images in the repository:
+
+bash
+az acr repository list --name <acr-name> --output table
+Or inspect tags:
+
+bash
+az acr repository show-tags --name <acr-name> --repository <repository-name>
