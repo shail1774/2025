@@ -1,0 +1,63 @@
+Create a file namespaces.txt with one namespace per line, e.g.,
+
+text
+namespace1
+namespace2
+namespace3
+
+
+PV_NAME="ushare-$ns"
+
+#...
+
+while IFS= read -r ns || [[ -n "$ns" ]]; do
+  [[ -z "$ns" || "$ns" == \#* ]] && continue
+
+  kubectl create namespace "$ns" --dry-run=client -o yaml | kubectl apply -f -
+
+  VOLUME_NAME="${VOLUME_PREFIX}${index}"   # Adjust if volume needs similar naming
+  PV_NAME="ushare-$ns"
+
+  # PV creation with new PV_NAME
+  cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: $PV_NAME
+spec:
+  capacity:
+    storage: $STORAGE_SIZE
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: $STORAGE_CLASS
+  csi:
+    driver: csi.netapp.com
+    volumeHandle: $VOLUME_NAME
+    fsType: ext4
+  mountOptions:
+    - nfsvers=4.1
+EOF
+
+  # PVC creation references new PV_NAME
+  cat <<EOF | kubectl apply -n "$ns" -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: $PVC_NAME
+spec:
+  volumeName: $PV_NAME
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: $STORAGE_SIZE
+  storageClassName: $STORAGE_CLASS
+EOF
+
+  echo "Created PV $PV_NAME and PVC $PVC_NAME in namespace $ns bound to volume $VOLUME_NAME."
+
+  ((index++))
+done < "$NAMESPACE_FILE"
+
+With this, for uat11 namespace, the PV will be named ushare-uat11.
