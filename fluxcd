@@ -174,3 +174,133 @@ You can check the health of all Kustomizations:
 
 bash
 kubectl get kustomizations -A
+
+######################################
+
+Checking the synchronization status between Azure repo and Rancher cluster for all applications.
+
+To confirm that all applications managed by FluxCD are synchronized between an Azure Git repository and a Rancher Kubernetes cluster, follow these steps:
+
+1. Check FluxCD Sync Status with flux CLI
+Use the flux CLI in your Rancher cluster context to view the status of all Kustomizations or HelmReleases monitored by Flux.
+
+Run:
+
+bash
+flux get kustomizations --all-namespaces
+or
+
+bash
+flux get helmreleases --all-namespaces
+Look for the STATUS column showing Ready meaning the resources in the Git repo are applied and in sync with the cluster.
+
+The LAST APPLIED REVISION shows the Git commit SHA Flux last reconciled.
+
+2. Use Flux Web UI (if installed)
+Flux v2 supports integration with tools like Weave GitOps or other dashboards.
+
+These visualize the sync status, errors, and drift for applications managed by Flux.
+
+3. Check FluxCD Controller Logs
+Inspect logs of Flux controllers (source-controller, kustomize-controller, helm-controller) for sync issues or errors.
+
+4. Rancher UI Inspection
+In Rancher, navigate to the cluster and projects where Flux deploys.
+
+Check workloads for expected pods, deployments, and resource versions matching Git manifests.
+
+5. GitOps Repo Verification
+Ensure the Azure repo’s commit matched by Flux in status is the latest intended version.
+
+Confirm that Flux reconciled the latest Git commit.
+
+Example: Check all Flux Kustomizations status
+bash
+flux get kustomizations --all-namespaces
+Sample output snippet:
+
+text
+NAME           READY  HEALTHY  LAST RECONCILE                 READY REVISION
+my-app         True   True     2025-10-08T00:00:00Z           abc123def456
+database       True   True     2025-10-07T20:00:00Z           abc123def456
+...
+Summary
+Use flux get commands to confirm all Flux applications are in sync and healthy.
+
+Compare Flux status READY REVISION with Azure repo commit SHA.
+
+Verify Rancher workloads match expected application state.
+
+Check Flux logs and dashboard for detailed status or sync errors.
+
+If the Azure Git repository managed by FluxCD is not in sync with the Rancher Kubernetes cluster, here are structured troubleshooting steps to identify and resolve the issue:
+
+1. Check Flux Sync Status
+Run:
+
+bash
+flux get kustomizations --all-namespaces
+or for Helm:
+
+bash
+flux get helmreleases --all-namespaces
+Look for:
+
+READY status (True means resources applied)
+
+HEALTHY status
+
+READY REVISION matches your latest Git commit SHA
+
+2. Inspect Flux Controller Logs
+Identify Flux controllers running in flux-system (or configured namespace).
+
+For example:
+
+bash
+kubectl -n flux-system logs deployment/kustomize-controller
+kubectl -n flux-system logs deployment/source-controller
+kubectl -n flux-system logs deployment/helm-controller
+Look for errors like git authentication failures, manifest parsing errors, or apply errors.
+
+3. Verify Git Repository Access
+Confirm Flux can access the Azure Git repo:
+
+Check repository URL, branch, and credentials (SSH keys, tokens).
+
+Verify secret containing credentials (e.g., SSH key secret) is correct and used by Flux.
+
+Check if repository was recently moved or credentials changed.
+
+4. Validate Manifest Files
+Check manifests in Azure repo for syntax errors or invalid resource definitions.
+
+Use kubectl apply --dry-run=client -f <manifest> locally or on cluster to verify.
+
+5. Reconcile Flux Manually
+Trigger a manual reconciliation to try force syncing:
+
+bash
+flux reconcile kustomization <name> --namespace <ns>
+Monitor logs for real-time feedback.
+
+6. Check for Resource Conflicts or Drift
+Resources modified manually in cluster can cause drift.
+
+Use:
+
+bash
+flux diff kustomization <name> --namespace <ns>
+Review and fix differences or force reconcile.
+
+7. Review Network/Proxy Issues
+Confirm cluster nodes and Flux controllers have network access to Azure Git repositories.
+
+Check if proxies or firewalls block access.
+
+8. Validate Namespace & Resource Targeting
+Ensure Flux Kustomization resources target correct namespaces.
+
+Check manifest namespace declarations match Flux sync configuration.
+
+
