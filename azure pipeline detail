@@ -1,0 +1,113 @@
+The YAML CI/CD pipeline concept is central to automating software development processes within Azure DevOps. Designing these pipelines requires understanding both the general pipeline workflow and the specific syntax rules of the YAML language.
+CI/CD Pipeline Concept
+A pipeline serves as a workflow defining the development, testing, and deployment steps for software. In the software industry, this workflow involves developing, building, and testing software.
+The pipeline concept is analogous to water pipelines, where input is provided on one side and output is received on the other. In a DevOps context, the stage output acts as the input for the next stage.
+YAML Pipelines in Azure DevOps:
+• Automation: Azure pipelines help automate the build and deployment processes, saving manual efforts.
+• Workflow: They define the CI/CD workflow, which typically includes developing, testing, and deploying the software code.
+• Compatibility: These pipelines are compatible with any programming language, such as Java, Python, PHP, or .NET.
+• Platform Independence: They are cloud-based and platform-independent, working seamlessly across Windows, Linux, or Macintosh machines.
+• Design Methods: Pipelines can be designed in two ways in Azure DevOps: through the classic UI editor (which requires no programming) or using YAML scripting. Designers often start with the classic UI and move to YAML scripting once they understand the syntax and schema.
+Key Pipeline Concepts (Hierarchy)
+Understanding the hierarchical building blocks is crucial before designing a YAML pipeline. The structure moves from the largest execution boundary to the smallest:
+1. Pipeline Trigger: The pipeline is first triggered (manually or automatically).
+2. Stages (stages): A pipeline can have multiple stages (e.g., Stage 1, Stage 2, Stage 3). A stage is defined first when designing the YAML pipeline. A stage contains one or more jobs (e.g., development stage, test stage, deployment stage).
+3. Jobs (jobs): A job runs on an agent and represents the execution boundary for a set of steps. A stage can contain multiple jobs, and jobs can have dependencies.
+4. Steps/Tasks (steps): The step is the smallest building block of the pipeline. Steps define scripts or tasks. You must define a job first before defining steps, as steps cannot be defined directly under a stage. Steps can have multiple script tasks.
+YAML Language and Scripting Rules
+YAML is a markup language commonly used for configuration files and is human-readable. To write a YAML pipeline script, specific rules must be followed:
+File Requirements:
+• YAML files must always have the .yaml or .yml extension (e.g., azure-pipelines.yml).
+• The YAML build definition file is added to the root of the repository within the project.
+Syntax and Structure:
+• Case Sensitivity: YAML is a case-sensitive language.
+• Indentation and Spacing: YAML spaces are allowed. Proper indentation and spacing are critical. After every colon (:), a space is required to define a value. Incorrect spacing or indentation can lead to errors (like "incorrect type expected object"). If the cursor is not in the correct position on the editor, you will not receive keyword suggestions.
+• Comments: Comments begin with the hash character (#) and are non-executable code used to provide information about stages, jobs, and steps.
+• Arrays and Lists:
+    ◦ The colon (:) is used to define an array (or list), such as trigger:, stages:, or jobs:.
+    ◦ Items or elements within a list are specified using a hyphen (-) plus a space/dash.
+Defining Pipeline Elements in YAML:
+1. Trigger: The trigger information is defined first. For example, trigger: none for manual execution or defining a branch like master.
+2. Agent Pool: Agent information is defined using the pool keyword. This specifies where the job will run (e.g., selecting a VM image like ubuntu-latest).
+3. Stages: Stages are defined as arrays. For instance, stages: followed by - stage: StageOne defines a stage.
+4. Jobs: Jobs are defined under the stage. For example, jobs: followed by - job: JobA.
+5. Steps: Steps are defined under the job. The smallest block of the pipeline, steps define the actual script using keywords like script: (e.g., script: echo Hello World).
+
+
+
+The design of a YAML CI/CD pipeline relies on a specific hierarchy of elements and strict adherence to YAML syntax rules. The primary elements define the execution boundaries of the workflow, ranging from the overall pipeline trigger down to the smallest executable task.
+Here is an explanation of the core pipeline elements, their purpose, and their structure within a YAML file:
+YAML Pipeline Elements and Structure
+YAML is a case-sensitive, human-readable markup language commonly used for configuration files. Pipeline configuration files must use the .yaml or .yml extension and should be added to the root of the repository.
+1. Trigger ()
+The trigger defines when the pipeline execution should start, either manually or automatically.
+Element Detail
+Description and Syntax Rules
+Citation
+Purpose
+Defines the conditions under which the pipeline is executed.
+Syntax
+trigger is defined as an array using a colon (:). A space must follow the colon to define a value.
+Option: Manual
+To prevent automatic triggering, use the value none.
+Option: Branch
+To trigger on specific branches, define the branch using a hyphen (-) plus a space/dash to specify the item in the list.
+Example
+trigger: none or trigger: followed by - master on the next line.
+2. Agent Pool ()
+The agent pool defines the computing environment (agent) where the subsequent jobs will run.
+Element Detail
+Description and Syntax Rules
+Citation
+Purpose
+Defines the agent information, specifying where the job will execute (e.g., Microsoft hosted or local agents).
+Syntax
+Uses the pool keyword followed by a colon (:).
+Options
+The name of the pool or a specific VM Image can be defined under pool.
+Example
+To select a specific VM image, you would use vmImage: followed by the desired image, such as ubuntu-latest.
+3. Stages ()
+A stage is the largest execution boundary defined after the pipeline trigger and pool information. A pipeline can have multiple stages.
+Element Detail
+Description and Syntax Rules
+Citation
+Purpose
+Contains one or more jobs. Examples include the development stage, test stage, or deployment stage.
+Syntax
+Defined as an array using the stages keyword and a colon (:). Individual stages are listed using a hyphen and space/dash.
+Importance
+If the stages property is missing or improperly placed, the editor may show an error such as "missing property stages is required".
+Example
+Defining a stage named StageOne: stages: followed by - stage: StageOne.
+4. Jobs ()
+A job runs on an agent and represents the execution boundary for a set of steps. A stage can contain one or more jobs.
+Element Detail
+Description and Syntax Rules
+Citation
+Purpose
+The container for steps (tasks) that execute within the defined stage and agent. Jobs can have dependencies.
+Syntax
+Defined as an array using the jobs keyword and a colon (:). Jobs are listed using a hyphen and space/dash. Jobs must be defined under a specific stage.
+Example
+Defining a job named JobA under a stage: jobs: followed by - job: JobA.
+5. Steps/Tasks ()
+The step is the smallest building block of the pipeline. Steps define the actual scripts or tasks that execute the work.
+Element Detail
+Description and Syntax Rules
+Citation
+Purpose
+Defines the script or tasks to be executed (e.g., a Maven task for building, or command-line scripting).
+Placement
+Steps cannot be defined directly under a stage. They must be defined under a job.
+Syntax
+Defined using the steps keyword and a colon (:). Steps are listed using a hyphen and space/dash.
+Script Example
+To run a simple command line, use the script: keyword, such as script: Echo a or script: echo Hello World.
+
+--------------------------------------------------------------------------------
+Summary of YAML Indentation and Errors
+Proper indentation and spacing are critical in YAML.
+• If you are not receiving suggestions while typing in the editor, your cursor may not be in the correct position.
+• Incorrect spacing or indentation can lead to errors such as "incorrect type expected object".
+• Ensure a space is provided after every colon (:) used to define a value.
