@@ -1,0 +1,49 @@
+Flux will automatically try to reconcile after you push. You can force a reconciliation using:
+flux reconcile kustomization flux-system
+
+Task	Command/Action	Notes
+Install FluxCD in your cluster - 	flux install	Installs Flux components
+Check prerequisites	- flux check --pre	Verifies required setup
+Bootstrap new cluster/repo - 	flux bootstrap git --url=[repo] --branch=main --path=clusters/my-cluster	Links cluster to repo
+Reconcile specific kustomization- flux reconcile kustomization <name>	Forces manifest sync
+List Flux sources (Git, Helm, OCI) - 	flux get sources	Shows detected sources
+List Flux kustomizations - 	flux get kustomizations	Shows managed resources
+View all installed controllers	- flux -h	CLI help overview
+Suspend/Resume kustomization	- flux suspend kustomization <name> / flux resume kustomization <name>	Stop/start sync
+Flux uninstall - 	flux uninstall	Removes Flux from cluster
+
+See reconciliation logs for a kustomization:
+
+
+flux logs --kind Kustomization --name <name>
+Get Flux system health:
+
+
+flux check --health
+List current errors and status:
+
+
+flux get kustomizations
+flux get sources
+##############################################################################
+
+Bootstrap Flux Using Azure DevOps Repo
+Adapted for Azure DevOps as Git source:
+
+bash
+export GIT_PASSWORD=<your-azure-devops-pat>
+
+flux bootstrap git \
+  --url=https://dev.azure.com/org/project/_git/repo \
+  --branch=main \
+  --token-auth=true \
+  --path=clusters/my-cluster
+Flux stores the token securely in Kubernetes secrets to access the repo.
+
+
+Common Post-Bootstrap Workflow Steps
+Push Application Manifests: Add/update Kubernetes manifests or HelmRelease YAML files in the Git repository under the cluster path.
+
+Flux Automation: Flux watches the Git repo and automatically applies changes to the cluster.
+
+Monitor and Troubleshoot: Use flux get kustomizations, flux logs, and Kubernetes events for deployment status.
