@@ -1,0 +1,256 @@
+To create namespaces from uat1 through uat50 along with corresponding PersistentVolumes (PV) and PersistentVolumeClaims (PVC) for each namespace using FluxCD, you need to generate the YAML manifests for all namespaces, PVs, and PVCs and sync them via Flux.
+
+Since FluxCD applies static YAML manifests, you usually generate these manifests ahead of time (using templates or scripts) so Git holds all resource definitions.
+
+Approach:
+Generate manifests for namespaces uat1 to uat50
+
+Create corresponding PVs and PVCs for each namespace
+
+Commit all YAML files to your Git repo monitored by FluxCD
+
+FluxCD will apply and reconcile all resources as per Git state
+
+Example Structure (simplified):
+namespaces/
+
+uat1.yaml
+
+uat2.yaml
+
+...
+
+uat50.yaml
+
+pvs/
+
+uat1-pv.yaml
+
+uat2-pv.yaml
+
+...
+
+uat50-pv.yaml
+
+pvcs/
+
+uat1-pvc.yaml
+
+uat2-pvc.yaml
+
+...
+
+uat50-pvc.yaml
+
+
+
+Sample namespace manifest (namespaces/uat1.yaml)
+text
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uat1
+Sample PV manifest (pvs/uat1-pv.yaml)
+text
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ushare-uat1
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: netapp-sc
+  csi:
+    driver: csi.netapp.com
+    volumeHandle: netapp-vol-uat1
+    fsType: ext4
+Sample PVC manifest (pvcs/uat1-pvc.yaml)
+text
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netapp-pvc
+  namespace: uat1
+spec:
+  volumeName: ushare-uat1
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: netapp-sc
+Automate manifest generation using a script (example in bash)
+bash
+#!/bin/bash
+for i in {1..50}
+do
+  ns="uat${i}"
+
+  mkdir -p namespaces pvs pvcs
+
+  cat <<EOF > namespaces/${ns}.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${ns}
+EOF
+
+  cat <<EOF > pvs/${ns}-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ushare-${ns}
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: netapp-sc
+  csi:
+    driver: csi.netapp.com
+    volumeHandle: netapp-vol-${ns}
+    fsType: ext4
+EOF
+
+  cat <<EOF > pvcs/${ns}-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netapp-pvc
+  namespace: ${ns}
+spec:
+  volumeName: ushare-${ns}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: netapp-sc
+EOF
+done
+Step 4: Commit & push to Git
+Add the generated YAML files to your Git repo where FluxCD sync is configured.
+
+Step 5: Define FluxCD Kustomization resource pointing to these manifests
+Example (if manifests are under clusters/prod/):
+
+text
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: uat-namespaces-pvs
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: "./clusters/prod"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  validation: client
+FluxCD will create/update/delete the namespaces, PVs, and PVCs automatically.
+
+Summary
+Generate individual YAMLs for uat1 to uat50 namespaces, PVs, and PVCs (with namespaced PVCs referencing PVs)
+
+Commit to Git repo monitored by FluxCD
+
+FluxCD reconciles and applies manifests declaratively
+
+##################################
+example
+
+Here is a complete example setup with sample manifests for namespaces, PVs, PVCs, and a FluxCD Kustomization resource to create uat1 to uat5 (you can extend it up to uat50 similarly):
+
+1. Namespace Manifests (example: namespaces/uat1.yaml)
+text
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uat1
+Repeat similarly for uat2.yaml to uat5.yaml by changing the name field.
+
+2. PersistentVolume Manifests (example: pvs/uat1-pv.yaml)
+text
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ushare-uat1
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: netapp-sc
+  csi:
+    driver: csi.netapp.com
+    volumeHandle: netapp-vol-uat1
+    fsType: ext4
+Similarly for uat2-pv.yaml to uat5-pv.yaml with corresponding names.
+
+3. PersistentVolumeClaim Manifests (example: pvcs/uat1-pvc.yaml)
+text
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: netapp-pvc
+  namespace: uat1
+spec:
+  volumeName: ushare-uat1
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: netapp-sc
+Repeat for uat2-pvc.yaml through uat5-pvc.yaml.
+
+4. FluxCD Kustomization (example: flux/kustomization.yaml)
+text
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: uat-ns-pv-pvc
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: "./clusters/uat"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  validation: client
+5. Directory structure (inside your Git repo)
+text
+clusters/
+└── uat/
+    ├── namespaces/
+    │   ├── uat1.yaml
+    │   ├── uat2.yaml
+    │   └── ...
+    ├── pvs/
+    │   ├── uat1-pv.yaml
+    │   ├── uat2-pv.yaml
+    │   └── ...
+    └── pvcs/
+        ├── uat1-pvc.yaml
+        ├── uat2-pvc.yaml
+        └── ...
+flux/
+└── kustomization.yaml
+Usage:
+Commit all manifests to your Git repo.
+
+Ensure FluxCD GitRepository source points to this repo.
+
+Apply the FluxCD Kustomization resource to bootstrap syncing.
+
+FluxCD will create the namespaces, PVs, and PVCs for uat1-uat5.
+
+Extend manifest sets to uat50 by generating similar YAMLs.
+
