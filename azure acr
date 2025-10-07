@@ -1,0 +1,139 @@
+Azure Container Registry (ACR) is a fully managed Docker container registry service provided by Microsoft Azure that enables building, storing, and managing container images in a private registry for secure and scalable container deployments.
+
+Key Features of Azure Container Registry
+Private registry: Secure repository for container images accessible only to authorized users.
+
+Integration: Works seamlessly with Azure Kubernetes Service (AKS), Azure App Service, and other Azure services.
+
+Image building & automation: Supports ACR Tasks to automate building, testing, and patching images on source code or base image updates.
+
+Multiple service tiers: Basic, Standard, and Premium tiers offer different storage capacities, throughput, and advanced features like geo-replication and private endpoints.
+
+Supports OCI artifacts: Stores Docker images, Open Container Initiative (OCI) images, and Helm charts.
+
+Encrypted storage: All images stored are encrypted at rest automatically.
+
+Typical Workflow to Use ACR
+Create a Resource Group
+
+bash
+az group create --name myResourceGroup --location eastus
+Create an Azure Container Registry
+
+bash
+az acr create --resource-group myResourceGroup --name mycontainerregistry --sku Basic
+mycontainerregistry must be unique and between 5-50 alphanumeric characters.
+
+Basic tier is suitable for development/testing; choose Standard or Premium for production scale.
+
+Log in to Azure Container Registry
+
+bash
+az acr login --name mycontainerregistry
+Build and Push a Docker Image
+
+bash
+docker build -t mycontainerregistry.azurecr.io/myapp:v1 .
+docker push mycontainerregistry.azurecr.io/myapp:v1
+Pull Images from ACR
+
+bash
+docker pull mycontainerregistry.azurecr.io/myapp:v1
+Integrate with Kubernetes or Azure services
+
+Use ACR images in Azure Kubernetes Service by configuring Kubernetes to access ACR.
+
+Deploy container images directly to Azure App Service or Azure Container Instances.
+
+Example: Create ACR and Push Image (CLI)
+bash
+# Create resource group
+az group create --name myResourceGroup --location eastus
+
+# Create ACR instance
+az acr create --resource-group myResourceGroup --name mycontainerregistry --sku Basic
+
+# Login to ACR
+az acr login --name mycontainerregistry
+
+# Build docker image locally and tag it
+docker build -t mycontainerregistry.azurecr.io/myapp:v1 .
+
+# Push image to ACR
+docker push mycontainerregistry.azurecr.io/myapp:v1
+This enables a seamless container image registry solution integrated with Azure DevOps, AKS, and other Azure cloud services for modern containerized application CI/CD pipelines.
+
+Configures kubectl to manage your AKS cluster.
+
+Step 6: Create Kubernetes Deployment YAML using ACR Image
+text
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: myACR.azurecr.io/myapp:v1
+        ports:
+        - containerPort: 80
+Step 7: Deploy Application on AKS
+bash
+kubectl apply -f deployment.yaml
+Deploys your container image from ACR onto AKS.
+
+Step 8: Expose Application (Optional)
+bash
+kubectl expose deployment myapp-deployment --type=LoadBalancer --port=80 --target-port=80
+Creates a LoadBalancer to access the application externally.
+
+This workflow shows how to create ACR, build and push images, configure AKS access to ACR, deploy container images on the AKS cluster, and expose them. 
+It covers the core integration points for containerized application CI/CD on Azure
+
+#############################################
+To allow Kubernetes (AKS) to pull images securely from a private Azure Container Registry (ACR), you can add image pull secrets to your cluster. Here are the common methods and options:
+
+1. Use az aks update --attach-acr (Recommended for AKS)
+Grants AKS the permission to pull from ACR by configuring managed identity permissions.
+
+No need for manual image pull secret creation.
+
+Command example:
+
+bash
+az aks update -n myAKSCluster -g myResourceGroup --attach-acr myACR
+2. Create Kubernetes Image Pull Secret Manually
+If you don’t use managed identity or need to specify credentials explicitly:
+
+Step 1: Get ACR credentials
+bash
+az acr credential show --name myACR
+Note the username and password (or use az acr login to authenticate).
+
+Step 2: Create secret in Kubernetes
+bash
+kubectl create secret docker-registry acr-secret \
+  --docker-server=myACR.azurecr.io \
+  --docker-username=<username> \
+  --docker-password=<password> \
+  --docker-email=<email>
+Step 3: Reference the secret in your pod or deployment YAML
+text
+spec:
+  containers:
+  - name: myapp
+    image: myACR.azurecr.io/myapp:v1
+  imagePullSecrets:
+  - name: acr-secret
+3. Use Azure AD Pod Identity (Advanced)
+For clusters with Azure AD Pod Identity enabled, pods can access ACR using assigned managed identities without needing image pull secrets.
+
