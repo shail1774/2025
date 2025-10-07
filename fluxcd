@@ -1,15 +1,68 @@
-Fluxcd
-export GIT_PASSWORD="9FTl1s6YVOmsC88DuFnJG0P0CiKqACLuO6FJeLZblZAmBEojyRxrJQQJ99BHACAAAAAAAAAAAAASAZDO1yh7"
+az group create --name TerraformStateRG --location
 
-flux bootstrap git \
-  --token-auth=true \
-  --url=https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo \
-  --branch=main \
-  --username=git \
-  --password="$GIT_PASSWORD" \
-  --path=clusters/aks-main
-  
-  Check Flux reconciliation status 
+az storage account create --name tfstateaccount082025 --resource-group TerraformStateRG --location centralindia --sku Standard_LRS
+
+
+
+az storage container create --account-name tfstateaccount082025 --name terraform-state --auth-mode login
+
+
+terraform init
+
+terraform init
+terraform validate
+terraform plan
+terraform apply
+terraform destroy
+
+
+
+Fluxcd
+
+
+flux bootstrap git  --token-auth=true  --url=https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo  --branch=flux-cd-1  --username=git  --password="$GIT_PASSWORD"  --path=clusters/aks-dummy
+
+
+
+
+
+
+
+PS C:\Test_2025\fluxcd> flux bootstrap git  --token-auth=true  --url=https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo  --branch=flux-cd-1  --username=git  --password="$GIT_PASSWORD"  --path=clusters/aks-dummy
+Please enter your Git repository password: 
+► cloning branch "flux-cd-1" from Git repository "https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo"
+✔ cloned repository
+► generating component manifests
+✔ generated component manifests
+✔ committed component manifests to "flux-cd-1" ("f5d028ca3e69873ef2b782543205d2ab7b13546a")
+► pushing component manifests to "https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo"
+► installing components in "flux-system" namespace
+✔ installed components
+✔ reconciled components
+► determining if source secret "flux-system/flux-system" exists
+► generating source secret
+► applying source secret "flux-system/flux-system"
+✔ reconciled source secret
+► generating sync manifests
+✔ generated sync manifests
+✔ committed sync manifests to "flux-cd-1" ("89df9344128c2ddcccd65653a60499221f4b00f8")
+► pushing sync manifests to "https://dev.azure.com/techrock2025/test_2025/_git/FluxCDrepo"
+► applying sync manifests
+✔ reconciled sync configuration
+◎ waiting for GitRepository "flux-system/flux-system" to be reconciled
+✔ GitRepository reconciled successfully
+◎ waiting for Kustomization "flux-system/flux-system" to be reconciled
+✔ Kustomization reconciled successfully
+► confirming components are healthy
+✔ helm-controller: deployment ready
+✔ kustomize-controller: deployment ready
+✔ notification-controller: deployment ready
+✔ source-controller: deployment ready
+✔ all components are healthy
+
+
+ 
+ Check Flux reconciliation status 
 kubectl get pods -n  kube-system
 flux get kustomizations -n kube-system
 flux get helmreleases -n kube-system
@@ -24,27 +77,27 @@ kubectl get events -n kube-system --sort-by='.metadata.creationTimestamp'
 
 kubectl describe helmrelease cert-manager -n kube-system
 
- Validate CustomResourceDefinitions (CRDs)
- kubectl get crds | grep cert-manager
- 
+Validate CustomResourceDefinitions (CRDs)
+kubectl get crds | grep cert-manager
+
 If CRDs are missing, cert-manager pods won’t start.
 
 Flux HelmRelease should be configured with install.crds: Create to install CRDs automatically.
 
 
- Confirm Flux components are healthy
- kubectl get pods -n flux-system
- 
- 
+Confirm Flux components are healthy
+kubectl get pods -n flux-system
+
+
 To configure cert-manager to issue certificates for your applications running on your Kubernetes cluster, 
 you need to create an Issuer or a ClusterIssuer resource that represents the certificate authority (CA) cert-manager will use to sign certificates. Then you create Certificate resources to request certificates for your apps.
 
 
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm search repo ingress-nginx/ingress-nginx --versions
- 
- 
- 1. Suspend and Resume the HelmRelease
+
+
+1. Suspend and Resume the HelmRelease
 This forces the Helm controller to reset and retry reconciliation:
 
 bash
@@ -93,10 +146,10 @@ In your HelmRelease YAML, you can set:
 
 text
 spec:
-  install:
-    timeout: 15m0s
-  upgrade:
-    timeout: 15m0s
+ install:
+   timeout: 15m0s
+ upgrade:
+   timeout: 15m0s
 To allow more time for Helm operations on large charts.
 
 8. Force reconciliation again
