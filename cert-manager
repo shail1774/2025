@@ -1,0 +1,355 @@
+1. Create a HelmRepository Resource (Jetstack)
+text
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://charts.jetstack.io
+
+2. Create a Namespace Manifest (Optional, if you want cert-manager in its own namespace)
+text
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  
+3. Create the HelmRelease Resource
+text
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: cert-manager
+      version: v1.13.2             # Use the desired version
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+        namespace: flux-system
+  install:
+    crds: Create                  # Ensures cert-manager CRDs are installed
+  upgrade:
+    crds: CreateReplace
+  values:
+    installCRDs: true
+    # Add any other custom values here
+
+Note:
+
+Setting installCRDs: true in the Helm values and install.crds: Create ensures that the cert-manager CRDs are installed/upgraded with the release.
+
+4. Kustomization Example
+Typically, you will group the above manifests in a directory (e.g., clusters/prod/cert-manager/) and add a kustomization.yaml:
+
+text
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - helmrepository.yaml
+  - helmrelease.yaml
+
+###########################
+cert-manager-helmrelease.yaml
+
+
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: kube-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: cert-manager
+      sourceRef:
+        kind: HelmRepository
+        name: cert-manager
+        namespace: kube-system
+      version: 'v1.14.2'  # Use a supported version
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
+  values:
+    installCRDs: true
+    # Optionally, set other chart values as needed
+  targetNamespace: kube-system
+
+cert-manager-helmrepository.yaml
+
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cert-manager
+  namespace: kube-system
+spec:
+  url: https://charts.jetstack.io
+  interval: 5m  
+  
+clusterissuer.yaml
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: techrock2025@outlook.com      # Your email for important notices and renewals
+    privateKeySecretRef:
+      name: letsencrypt-prod-private-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx                   # Use ingress class applicable in your cluster  
+		  
+		  
+#########################
+
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://charts.jetstack.io
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: bitnami
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://charts.bitnami.com/bitnami
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: prometheus-community
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://prometheus-community.github.io/helm-charts
+  
+  
+  
+####################
+kind: HelmRepository
+metadata:
+  name: my-private-repo
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://my.private.repo/chart
+  secretRef:
+    name: my-helm-repo-auth
+	
+	
+#################################
+A Kubernetes image pull replicator (usually referring to an image automation or image reflector controller) enables Kubernetes clusters to synchronize, replicate, and update container image versions automatically—especially in GitOps workflows.
+
+It is primarily used to:
+
+Monitor container registries for new image tags/releases.
+
+Update Kubernetes workload manifests (e.g. Deployments, Helm charts) in Git automatically with the new image tags.
+
+Trigger automated deployment rollouts in clusters using FluxCD, keeping application versions up to date without manual edits.	
+
+How to Add Image Pull Replicator with FluxCD
+FluxCD implements this capability using two key components:
+
+image-reflector-controller: Scans container registries for new image tags and versions.
+
+image-automation-controller: Updates your Git repository’s manifests/charts with the latest image tags based on policies.
+
+Example: Deploy Image Automation in FluxCD
+Add an ImageRepository resource:
+
+text
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: myapp
+  namespace: flux-system
+spec:
+  image: myacr.azurecr.io/myapp
+  interval: 5m
+(Optional) Add a Secret for private registry authentication:
+
+text
+apiVersion: v1
+kind: Secret
+metadata:
+  name: acr-auth
+  namespace: flux-system
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: <base64-encoded-auth>
+Reference the secret in your ImageRepository spec:
+
+text
+spec:
+  secretRef:
+    name: acr-auth
+Define an ImagePolicy:
+
+text
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: myapp
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: myapp
+  policy:
+    semver:
+      range: '>=1.0.0,<2.0.0'
+Set up ImageUpdateAutomation (updates application YAML/Helm chart in Git):
+
+text
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: myapp
+  namespace: flux-system
+spec:
+  interval: 3m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcd-bot
+        email: fluxcd@mydomain.com
+      messageTemplate: 'update image to {{range .Changed.Changes}}{{println .NewValue}}{{end}}'
+  update:
+    strategy: Setters
+    path: ./apps/myapp
+    selectors:
+      - name: myapp
+Summary of Workflow
+The image-reflector-controller watches registries for new images.
+
+ImagePolicy defines which images/tags to track (semver, latest, etc.).
+
+ImageUpdateAutomation updates your GitOps repository with new tags.
+
+FluxCD applies updated manifests to your cluster, rolling out new application images seamlessly.
+
+
+##################
+The Mittwald Kubernetes Replicator is a custom Kubernetes controller designed to replicate Secrets and ConfigMaps across multiple namespaces in a cluster. This is useful when you want to share sensitive data or configuration consistently across different namespaces without manually duplicating resources.
+
+Key Features:
+Replicates Secrets and ConfigMaps from a source namespace to one or more target namespaces.
+
+Supports both push-based and pull-based replication.
+
+Keeps replicated resources in sync automatically.
+
+Allows fine-grained control via annotations like:
+
+replicator.v1.mittwald.de/replication-allowed: Enables replication on a resource.
+
+replicator.v1.mittwald.de/replication-allowed-namespaces: Specifies namespaces allowed to receive replicated resource.
+
+replicator.v1.mittwald.de/replicate-from: Specifies source resource to replicate from.
+
+Handles special cases such as TLS secrets and owner references.
+
+To deploy the Mittwald Kubernetes Replicator in your Kubernetes cluster using FluxCD, you will use GitOps by committing the necessary manifests (HelmRelease or YAML) to your Git repository managed by FluxCD.
+
+
+Option 1: Using HelmRelease (Recommended)
+Create a HelmRepository and HelmRelease resource in your Git repo for the replicator.
+
+Step 1: Add HelmRepository manifest (if not already added)
+text
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: mittwald
+  namespace: flux-system
+spec:
+  url: https://helm.mittwald.de
+  interval: 10m
+Step 2: Add HelmRelease manifest for Kubernetes Replicator
+text
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kubernetes-replicator
+  namespace: kubernetes-replicator
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: kubernetes-replicator
+      version: 2.12.0              # Replace with desired version
+      sourceRef:
+        kind: HelmRepository
+        name: mittwald
+        namespace: flux-system
+  values:
+    # Add any custom configuration values here if needed
+Step 3: Add Namespace manifest for replicator (optional if creating new namespace)
+text
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubernetes-replicator
+Option 2: Raw manifests deployment
+If you prefer not to use Helm, add RBAC and Deployment manifests directly under your GitOps directory:
+
+Fetch manifests from https://github.com/mittwald/kubernetes-replicator/tree/master/deploy
+
+Add them to your Git repo under a folder like clusters/your-cluster/kubernetes-replicator
+
+Create a FluxCD Kustomization resource pointing to that folder.
+
+Example Kustomization:
+
+text
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: kubernetes-replicator
+  namespace: flux-system
+spec:
+  interval: 5m
+  path: "./clusters/your-cluster/kubernetes-replicator"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  validation: client
+Final Step: Commit and Push
+Commit and push all manifest files to your Git repository.
+
+FluxCD will automatically reconcile and deploy the Kubernetes Replicator controller in the target cluster.
+
+  flux suspend helmrelease ingress-nginx -n kube-system
+flux resume helmrelease ingress-nginx -n kube-system
+kubectl describe helmrelease ingress-nginx -n kube-system
+kubectl get events -n kube-system --sort-by='.metadata.creationTimestamp'
+
+helm repo add
+
+flux reconcile helmrelease ingress-nginx -n kube-system --reset
